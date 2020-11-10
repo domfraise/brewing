@@ -36,7 +36,6 @@ def getCurrentPpms(salts, runningTotals):
     ionPpms = {}
     for salt, weight in runningTotals.items():
         ions = salts.get(salt)
-        print(ions)
         for ion,ppm in ions.items():
             if ionPpms.get(ion) is None:
                 ionPpms[ion] = ppm * weight
@@ -48,19 +47,28 @@ def getCurrentPpms(salts, runningTotals):
 
 #calculate for all ions with 1 source
 
+def calculateSaltsWithOneSource(ionSources, salts, runningTotals):
+    for ion, sources in ionSources.items():
+        if len(sources) == 1:
+            saltName = sources[0]
+            print("One source for " + ion)
 
-for ion, sources in ionSources.items():
-    if len(sources) == 1:
-        print(sources)
-        saltName = sources[0]
-        salt = salts[saltName]
-        ppmFor1g = salt[ion]
-        desired = desiredPpm[ion]
-        grammesOfSalt = desired/ppmFor1g
-        print(salt)
-        runningTotals[saltName] = grammesOfSalt
+            salt = salts[saltName]
+            ppmFor1g = salt[ion]
+            desired = desiredPpm[ion]
+            grammesOfSalt = desired/ppmFor1g
+            runningTotals[saltName] = grammesOfSalt
 
-print(getCurrentPpms(salts, runningTotals))
+            ionsAdded = salts[saltName].keys()
+            for ion in ionsAdded:
+                ionSources[ion].remove(saltName)
+            print("remainingSources: " + str(ionSources))
+
+calculateSaltsWithOneSource(ionSources, salts, runningTotals)
+
+calculateSaltsWithOneSource(ionSources, salts, runningTotals)
+
+print(runningTotals)
 
 #for ion in desiredPpm.values():
     
