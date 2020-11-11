@@ -25,8 +25,10 @@ class Ion:
         return self.ppmPerGramme * weight
 
 class SaltSolution:
-    def __init__(self, salt_concentrations):
-        self.salt_concentrations = salt_concentrations
+    def __init__(self, salt_defs):
+        self.salt_concentrations = []
+        self.salt_defs = salt_defs
+        self.ion_sources = self.calculateIonSources()
 
     def get_current_ppms(self):
         ionPpms = {}
@@ -46,8 +48,8 @@ class SaltSolution:
                 return
         self.salt_concentrations.append(SaltConcentration(salt_def, weight))
 
-    def add_salt_for_ppm(self, salt_def, ion_name, ppm_to_add):
-        #1g of saltdef will give you salt
+    def add_salt_for_ppm(self, ion_name, ppm_to_add):
+        salt_def = salt_defs[self.ion_sources[ion_name][0]]
         for ion in salt_def.ions:
             if ion.name == ion_name:
                 weight_to_add = ppm_to_add/ion.ppmPerGramme
@@ -55,29 +57,30 @@ class SaltSolution:
                 #ion.ppm * x = ppm_add
 
 
+    def calculateIonSources(self):
+        ionSources = {}
+        for saltDef in self.salt_defs.values():
+            for ion in saltDef.ions:
+                if ionSources.get(ion.name) is None:
+                    ionSources[ion.name] = [saltDef.name]
+                else:
+                    ionSources[ion.name].append(saltDef.name)
 
+        return ionSources
 
-def calculateIonSources(salts):
-    ionSources = {}
-    for saltDef in salts.values():
-        for ion in saltDef.ions:
-            if ionSources.get(ion.name) is None:
-                ionSources[ion.name] = [saltDef.name]
-            else:
-                ionSources[ion.name].append(saltDef.name)
-
-    return ionSources
-
-salts = {"CaSO4": SaltDef("CaSO4", [Ion("ca", 23), Ion("s04", 56)]),
+salt_defs = {"CaSO4": SaltDef("CaSO4", [Ion("ca", 23), Ion("s04", 56)]),
          "CaCl2": SaltDef("CaCl2", [Ion("ca", 36), Ion("cl", 64)]),
          "MgSO4": SaltDef("MgSO4", [Ion("mg", 20), Ion("s04", 80)]),
          "NaCl": SaltDef("NaCl", [Ion("na", 39), Ion("cl", 61)]),
          "NaHCO3": SaltDef("NaHCO3", [Ion("na", 27), Ion("hc03", 73)])}
 
-ionSources = calculateIonSources(salts)
-print(ionSources)
-soln = SaltSolution([])
-soln.add_salt_for_ppm(salts["CaSO4"], 'ca', 60)
+
+
+
+soln = SaltSolution(salt_defs)
+
+soln.add_salt_for_ppm('ca', 30)
+soln.add_salt_for_ppm('cl', 70)
 
 print([(x.salt_def.name, x.weight) for x in soln.salt_concentrations])
 print(soln.get_current_ppms())
