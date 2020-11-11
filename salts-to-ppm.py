@@ -66,20 +66,24 @@ def calculateSaltsWithOneSource(ionSources, salts, runningTotals, desiredPpm):
 
 
 def initialPassDone(ionSources, runningTotal, desiredPpms, salts):
+    # if any ions have sources and desired ppm not met, keep adding
     currentPpms = getCurrentPpms(salts, runningTotals)
     for ion, sources in ionSources.items():
-        print(currentPpms.get(ion), ion)
-        if len(sources) > 0 and currentPpms.get(ion) is not None and currentPpms[ion] < desiredPpms[ion]:
+        print(ion, " - sources: ", sources, " ppm ", currentPpms.get(ion), " desired ", desiredPpms[ion])
+        if currentPpms.get(ion) is None:
+            return False
+        if len(sources) > 0 and currentPpms[ion] < desiredPpms[ion]:
             return False
     return True
         # sources left and desired ppm not met
 
-while initialPassDone(ionSources, runningTotals, desiredPpm, salts):  
+while not initialPassDone(ionSources, runningTotals, desiredPpm, salts):  
     calculateSaltsWithOneSource(ionSources, salts, runningTotals, desiredPpm)
 
+for ion, ppm in getCurrentPpms(salts, runningTotals).items():
+    print("Ion: ", ion, ", desired: ", desiredPpm[ion], ", current: ", ppm)
 
-print(getCurrentPpms(salts, runningTotals))
-#print(desiredPpm)
+
 #print(ionSources)
 
 #for ion in desiredPpm.values():
