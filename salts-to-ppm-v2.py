@@ -61,6 +61,9 @@ class SaltSolution:
                     ionPpms[ion] = ppm
         return ionPpms
 
+    def get_current_ppms_for_ion(self, ion_name):
+        return self.get_current_ppms().get(ion_name)
+
     def addSalt(self, salt_def, weight):
         for concentration in self.salt_concentrations:
             if concentration.salt_def.name is salt_def.name:
@@ -76,14 +79,18 @@ class SaltSolution:
                     self.salt_concentrations.remove(concentration)
 
     def add_salt_for_ppm(self, ion_name, ppm_to_add):
-        salt_def = salt_defs[self.ion_sources[ion_name][0]]
-        for salt in self.ion_sources[ion_name]:
+        for salt_def in self.ion_sources[ion_name]:
             weight_aded = self.add_ppm_from_specific_source(ion_name, ppm_to_add, salt_def)
             if weight_aded > 0:
                 break
 
-            #ion.ppm * x = ppm_add
-        #attempt partial add
+
+    def remove_salt_for_ppm(self, ion_name, ppm_to_remove):
+        for salt_def in self.ion_sources[ion_name]:
+            weight_removed = self.remove_ppm_from_specific_source(ion_name, ppm_to_remove, salt_def)
+            if weight_removed > 0:
+                break
+
     def add_ppm_from_specific_source(self, ion_name, ppm_to_add, salt_def):
         weight_to_add = 0
         for ion in salt_def.ions:
@@ -95,6 +102,25 @@ class SaltSolution:
                 weight_to_add = 0
 
         return weight_to_add
+
+    def remove_ppm_from_specific_source(self, ion_name, ppm_to_remove, salt_def):
+        weight_to_remove = 0
+        for ion in salt_def.ions:
+            if ion.name == ion_name:
+                weight_to_remove = ppm_to_remove / ion.ppmPerGramme
+                self.remove_salt(salt_def, weight_to_remove)  # ?
+                if not self.solution_is_valid():
+                    self.addSalt(salt_def, weight_to_remove)
+                weight_to_remove = 0
+
+        return weight_to_remove
+
+    def set_ppm_for_ion(self, ion_name, desired_ppm):
+        current_ppm = self.get_current_ppms_for_ion(ion_name)
+        if current_ppm < desired_ppm:
+            self.add_salt_for_ppm(ion_name, desired_ppm - current_ppm)
+        if current_ppm > desired_ppm:
+            self.remove_salt_for_ppm(ion_name, current_ppm - desired_ppm)
 
     def calculateIonSources(self):
         ionSources = {}
