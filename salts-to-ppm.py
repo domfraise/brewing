@@ -244,7 +244,8 @@ for ion, ppm in reversed(desired_ppms.items()):
     success = soln.set_ppm_for_ion(ion, ppm)
     if not success:
         print("failed to set ", ion, " to ", ppm, " ppm without violating restrictions")
-    print("Current PPM's", soln.get_current_ppms())
+    print("New PPM's", soln.get_current_ppms())
+    print("New Salt Content", soln.get_current_salt_weights())
 print("-- Final Result ----")
 final_ppms = soln.get_current_ppms()
 for ion, desired_ppm in desired_ppms.items():
