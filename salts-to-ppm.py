@@ -63,18 +63,19 @@ class SaltSolution:
 
     def set_min_restrictions(self):
         print("-- Adding for Min Restrictions --")
-        for restriction in self.min_restrictions:
+        for restriction in self.min_restrictions.values():
             if self.get_current_ppms_for_ion(restriction.ion_name) < restriction.min_ppm:
                 success = self.set_ppm_for_ion(restriction.ion_name, restriction.min_ppm)
                 if not success:
                     raise Exception('Cannot set restriction ', restriction, " without violating other restrictions")
+        print("--- Min restrictions set up ---")
         self.min_restrictions_set = True
 
     def solution_is_valid(self):
-        for restriction in max_restrictions:
+        for restriction in max_restrictions.values():
             if restriction.violates_restriction(self):
                 return False
-        for restriction in min_restrictions:
+        for restriction in min_restrictions.values():
             if self.min_restrictions_set and restriction.violates_restriction(self):
                 return False
         return True
@@ -191,23 +192,25 @@ salt_defs = {"CaSO4": SaltDef("CaSO4", [Ion("ca", 23), Ion("s04", 56)]),
          "NaHCO3": SaltDef("NaHCO3", [Ion("na", 27), Ion("hc03", 73)])}
 
 
-max_restrictions = [
-    MaxRestriction("ca", 100),
-    MaxRestriction("mg", 50),
-    MaxRestriction("na", 150),
-    MaxRestriction("s04", 400),
-    MaxRestriction("cl", 400),
-    MaxRestriction("hc03", 20)]
+max_restrictions = {
+    "ca": MaxRestriction("ca", 100),
+    "mg": MaxRestriction("mg", 50),
+    "na": MaxRestriction("na", 150),
+    "s04": MaxRestriction("s04", 400),
+    "cl": MaxRestriction("cl", 400),
+    "hc03": MaxRestriction("hc03", 20)
+}
 
-min_restrictions = [
-    MinRestriction("ca", 60),
-    MinRestriction("mg", 10),
-    MinRestriction("na", 10),
-    MinRestriction("s04", 10),
-    MinRestriction("cl", 10),
-    MinRestriction("hc03", 10)
-]
+min_restrictions = {
+    "ca": MinRestriction("ca", 60),
+    "mg": MinRestriction("mg", 10),
+    "na": MinRestriction("na", 10),
+    "s04": MinRestriction("s04", 10),
+    "cl": MinRestriction("cl", 10),
+    "hc03": MinRestriction("hc03", 0)
+}
 
+#set one by one in reverse order
 desired_ppms = {
     "cl": 225,
     "s04": 150,
@@ -227,15 +230,25 @@ ion_ranking = {
     "hc03": 0.1
 }
 
+print("--- Config ---")
+for ion, desired_ppm in desired_ppms.items():
+    print(ion, " min: ", min_restrictions.get(ion).min_ppm,
+          ", desired: ", desired_ppm,
+          ", max: ", max_restrictions.get(ion).max_ppm)
+
 
 soln = SaltSolution(salt_defs, max_restrictions, min_restrictions, ion_ranking)
 
 for ion, ppm in reversed(desired_ppms.items()):
-    print("Setting ", ion, " to ", ppm, " ppm")
+    print("--- Setting ", ion, " to ", ppm, " ppm ---")
     success = soln.set_ppm_for_ion(ion, ppm)
     if not success:
         print("failed to set ", ion, " to ", ppm, " ppm without violating restrictions")
-    print(soln.get_current_ppms())
+    print("Current PPM's", soln.get_current_ppms())
 print("-- Final Result ----")
+final_ppms = soln.get_current_ppms()
+for ion, desired_ppm in desired_ppms.items():
+    print(ion, ", desired: ", desired_ppm,
+          ", actual: ", final_ppms.get(ion))
+
 print(soln.get_current_salt_weights())
-print(soln.get_current_ppms())
