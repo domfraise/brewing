@@ -51,11 +51,12 @@ class MinRestriction:
 
 
 class SaltSolution:
-    def __init__(self, salt_defs, max_restrictions, min_restrictions):
+    def __init__(self, salt_defs, max_restrictions, min_restrictions, ion_rankings):
         self.salt_concentrations = []
         self.salt_defs = salt_defs
         self.max_restrictions = max_restrictions
         self.min_restrictions = min_restrictions
+        self.ion_rankings = ion_rankings
         self.ion_sources = self.calculateIonSources()
         self.set_min_restrictions()
 
@@ -109,43 +110,50 @@ class SaltSolution:
 
     def add_salt_for_ppm(self, ion_name, ppm_to_add):
         for salt_name in self.ion_sources[ion_name]:
-            weight_aded = self.add_ppm_from_specific_source(ion_name, ppm_to_add, self.salt_defs.get(salt_name))
-            if weight_aded == 0:
-                break
+            success = self.add_ppm_from_specific_source(ion_name, ppm_to_add, self.salt_defs.get(salt_name))
+            if success:
+                return success
 
 
     def remove_salt_for_ppm(self, ion_name, ppm_to_remove):
         for salt_name in self.ion_sources[ion_name]:
-            weight_removed = self.remove_ppm_from_specific_source(ion_name, ppm_to_remove, self.salt_defs.get(salt_name))
-            if weight_removed > 0:
-                break
+            success = self.remove_ppm_from_specific_source(ion_name, ppm_to_remove, self.salt_defs.get(salt_name))
+            if success:
+                return success
 
     def add_ppm_from_specific_source(self, ion_name, ppm_to_add, salt_def):
-        weight_to_add = 0
+        success = False
         for ion in salt_def.ions:
             if ion.name == ion_name:
                 weight_to_add = ppm_to_add / ion.ppmPerGramme
                 self.addSalt(salt_def, weight_to_add)  # ?
                 if not self.solution_is_valid():
                     self.remove_salt(salt_def, weight_to_add)
-                weight_to_add = 0
+                else:
+                    success = True
+                break
 
-        return weight_to_add
+
+        return success
 
     def remove_ppm_from_specific_source(self, ion_name, ppm_to_remove, salt_def):
-        weight_to_remove = 0
+        success = False
         for ion in salt_def.ions:
             if ion.name == ion_name:
                 weight_to_remove = ppm_to_remove / ion.ppmPerGramme
                 self.remove_salt(salt_def, weight_to_remove)  # ?
                 if not self.solution_is_valid():
                     self.addSalt(salt_def, weight_to_remove)
-                weight_to_remove = 0
+                else:
+                    success = True
+                break
 
-        return weight_to_remove
+        return success
 
     def set_ppm_for_ion(self, ion_name, desired_ppm):
         current_ppm = self.get_current_ppms_for_ion(ion_name)
+        if current_ppm == desired_ppm:
+            return
         if current_ppm < desired_ppm:
             self.add_salt_for_ppm(ion_name, desired_ppm - current_ppm)
         if current_ppm > desired_ppm:
@@ -194,15 +202,26 @@ desired_ppms = {
     "na": 150,
     "hc03": 0
 }
-soln = SaltSolution(salt_defs, max_restrictions, min_restrictions)
+
+ion_ranking = {
+    "cl": 1,
+    "s04": 0.8,
+    "ca": 0.6,
+    "mg": 0.5,
+    "na": 0.3,
+    "hc03": 0.1
+}
+
+soln = SaltSolution(salt_defs, max_restrictions, min_restrictions, ion_ranking)
 
 for ion, ppm in reversed(desired_ppms.items()):
+    print(soln.get_current_ppms())
     soln.set_ppm_for_ion(ion, ppm)
 
 print(soln.get_current_salt_weights())
 
 final_ppms = soln.get_current_ppms()
-for ion, desired_ppm in desired_ppms.items():
-    print(ion, " desired = ", desired_ppm, " actual = ", final_ppms.get(ion))
+# for ion, desired_ppm in desired_ppms.items():
+#print(ion, " desired = ", desired_ppm, " actual = ", final_ppms.get(ion))
 
-print(final_ppms)
+# print(final_ppms)
