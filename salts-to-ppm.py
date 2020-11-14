@@ -10,6 +10,7 @@ class SaltConcentration:
     def __init__(self, salt_def, weight):
         self.salt_def = salt_def
         self.weight = weight
+        self.litres_of_water = 10
 
     def get_current_ppms(self):
         return self.get_ppms_for_weight(self.weight)
@@ -20,10 +21,10 @@ class SaltConcentration:
 class Ion:
     def __init__(self, name, ppmPerGramme):
         self.name = name
-        self.ppmPerGramme = ppmPerGramme
+        self.ppmPerGrammePer10L = ppmPerGramme
 
     def get_ppm_for_weight(self, weight):
-        return self.ppmPerGramme * weight
+        return self.ppmPerGrammePer10L * weight
 
 class MaxRestriction:
     def __init__(self, ion_name, max_ppm):
@@ -62,6 +63,14 @@ class SaltSolution:
         self.ion_sources = self.calculateIonSources()
         self.min_restrictions_set = False
         self.set_min_restrictions()
+
+    def get_litres_of_water(self):
+        total = 0
+        # print("x")
+        for concentration in self.salt_concentrations:
+            # print(concentration.litres_of_water)
+            total += concentration.litres_of_water
+        return total
 
     def get_heuristic(self):
         score = 0
@@ -168,7 +177,7 @@ class SaltSolution:
         success = False
         for ion in salt_def.ions:
             if ion.name == ion_name:
-                weight_to_add = ppm_to_add / ion.ppmPerGramme
+                weight_to_add = ppm_to_add / ion.ppmPerGrammePer10L
                 self.addSalt(salt_def, weight_to_add)  # ?
                 if not self.solution_is_valid():
                     self.remove_salt(salt_def, weight_to_add)
@@ -183,7 +192,7 @@ class SaltSolution:
         success = False
         for ion in salt_def.ions:
             if ion.name == ion_name:
-                weight_to_remove = ppm_to_remove / ion.ppmPerGramme
+                weight_to_remove = ppm_to_remove / ion.ppmPerGrammePer10L
                 self.remove_salt(salt_def, weight_to_remove)  # ?
                 if not self.solution_is_valid():
                     self.addSalt(salt_def, weight_to_remove)
@@ -353,3 +362,5 @@ for ion, desired_ppm in desired_ppms.items():
 
 print(solution.get_current_salt_weights())
 print(solution.get_heuristic())
+
+print(solution.get_litres_of_water())
