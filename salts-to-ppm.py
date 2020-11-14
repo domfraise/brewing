@@ -130,17 +130,23 @@ class SaltSolution:
             if concentration.salt_def.name is salt_def.name:
                 concentration.weight += weight
                 # print("Added ", salt_deef.name, " weight ", weight)
-                return
+                return weight
         self.salt_concentrations.append(SaltConcentration(salt_def, weight))
+        return weight
         # print("Added ", salt_def.name, " weight ", weight)
 
 
     def remove_salt(self, salt_def, weight):
         for concentration in self.salt_concentrations:
             if concentration.salt_def.name is salt_def.name:
+                current_weight = concentration.weight
                 concentration.weight -= weight
                 if concentration.weight <= 0:
                     self.salt_concentrations.remove(concentration)
+                    return current_weight
+                else:
+                    return weight
+        return 0
         # print("Removed ", salt_def.name, " weight ", weight)
 
 
@@ -231,17 +237,16 @@ class SolutionOptimiser:
         self.current_score = self.soln.get_heuristic()
 
     def optimise_for_salt(self, salt_def):
-
         current_score = self.soln.get_heuristic()
-        # print("current score", current_score)
+        # print(current_score)
 
-        self.soln.addSalt(salt_def, self.optimisation_delta)
+        weight_added = self.soln.addSalt(salt_def, self.optimisation_delta)
         increase_score = self.soln.get_heuristic()
-        self.soln.remove_salt(salt_def, self.optimisation_delta)
+        self.soln.remove_salt(salt_def, weight_added)
 
-        self.soln.remove_salt(salt_def, self.optimisation_delta)
+        weight_removed = self.soln.remove_salt(salt_def, self.optimisation_delta)
         decrease_score = self.soln.get_heuristic()
-        self.soln.addSalt(salt_def, self.optimisation_delta)
+        self.soln.addSalt(salt_def, weight_removed)
 
         #base case - at local max or platau
         if current_score >= increase_score and current_score >= decrease_score:
@@ -250,9 +255,15 @@ class SolutionOptimiser:
             return
 
         if increase_score > current_score:
+            # print(decrease_score, current_score, increase_score)
+            # print("increase")
+
             self.soln.addSalt(salt_def, self.optimisation_delta)
             self.optimise_for_salt(salt_def)
         elif decrease_score > current_score:
+            # print("decrease")
+            # print(decrease_score, current_score, increase_score)
+
             self.soln.remove_salt(salt_def, self.optimisation_delta)
             self.optimise_for_salt(salt_def)
         else:
@@ -263,7 +274,17 @@ class SolutionOptimiser:
 
     def optimise_for_all_salts(self):
         for salt, salt_def in salt_defs.items():
+            # print("Optimising ", salt_def.name)
             self.optimise_for_salt(salt_def)
+            # print(self.soln.get_heuristic())
+
+class IonConfig:
+    def __init__(self, ion_name, min_ppm, desired_ppm, max_ppm, priority_multiplier):
+        self.ion_name = ion_name
+        self.min_restriction = MinRestriction(ion_name, min_ppm)
+        self.desired_ppm = desired_ppm
+        self.max_restriction = MaxRestriction(ion_name, max_ppm)
+        self.priority_multiplier = priority_multiplier
 
 salt_defs = {"CaSO4": SaltDef("CaSO4", [Ion("ca", 23), Ion("s04", 56)]),
          "CaCl2": SaltDef("CaCl2", [Ion("ca", 36), Ion("cl", 64)]),
@@ -318,23 +339,18 @@ for ion, desired_ppm in desired_ppms.items():
 
 
 optimiser = SolutionOptimiser(salt_defs, max_restrictions, min_restrictions, desired_ppms, ion_ranking)
+optimiser.set_ppms_for_desired()
 optimiser.optimise_for_all_salts()
+# optimiser.optimise_for_salt(salt_defs['MgSO4'])
 
 solution = optimiser.soln
 
-# for ion, ppm in reversed(desired_ppms.items()):
-#     print("--- Setting ", ion, " to ", ppm, " ppm ---")
-#     success = solution.set_ppm_for_ion(ion, ppm)
-#     print(solution.get_heuristic())
-#     if not success:
-#         print("failed to set ", ion, " to ", ppm, " ppm without violating restrictions")
-#     print("New PPM's", solution.get_current_ppms())
-#     print("New Salt Content", solution.get_current_salt_weights())
+
 print("-- Final Result ----")
 final_ppms = solution.get_current_ppms()
 for ion, desired_ppm in desired_ppms.items():
-    print(ion, ", desired: ", desired_ppm,
-          ", actual: ", final_ppms.get(ion))
+    print(ion, " min ", min_restrictions[ion].min_ppm, " desired: ", desired_ppm,
+          ", actual: ", final_ppms.get(ion), " max ", max_restrictions[ion].max_ppm)
 
 print(solution.get_current_salt_weights())
-print(solution.get_heuristic())
+print(solution.solution_is_valid())
