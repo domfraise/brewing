@@ -1,5 +1,4 @@
 
-
 class SaltDef:
     def __init__(self, name, ions):
         self.name = name
@@ -66,9 +65,7 @@ class SaltSolution:
 
     def get_litres_of_water(self):
         total = 0
-        # print("x")
         for concentration in self.salt_concentrations:
-            # print(concentration.litres_of_water)
             total += concentration.litres_of_water
         return total
 
@@ -294,73 +291,76 @@ class IonConfig:
         self.max_restriction = MaxRestriction(ion_name, max_ppm)
         self.priority_multiplier = priority_multiplier
 
-salt_defs = {"CaSO4": SaltDef("CaSO4", [Ion("ca", 23), Ion("s04", 56)]),
-         "CaCl2": SaltDef("CaCl2", [Ion("ca", 36), Ion("cl", 64)]),
-         "MgSO4": SaltDef("MgSO4", [Ion("mg", 20), Ion("s04", 80)]),
-         "NaCl": SaltDef("NaCl", [Ion("na", 39), Ion("cl", 61)]),
-         "NaHCO3": SaltDef("NaHCO3", [Ion("na", 27), Ion("hc03", 73)])}
+if __name__ == '__main__':
+    salt_defs = {"CaSO4": SaltDef("CaSO4", [Ion("ca", 23), Ion("s04", 56)]),
+             "CaCl2": SaltDef("CaCl2", [Ion("ca", 36), Ion("cl", 64)]),
+             "MgSO4": SaltDef("MgSO4", [Ion("mg", 20), Ion("s04", 80)]),
+             "NaCl": SaltDef("NaCl", [Ion("na", 39), Ion("cl", 61)]),
+             "NaHCO3": SaltDef("NaHCO3", [Ion("na", 27), Ion("hc03", 73)])}
 
 
-max_restrictions = {
-    "ca": MaxRestriction("ca", 100),
-    "mg": MaxRestriction("mg", 50),
-    "na": MaxRestriction("na", 150),
-    "s04": MaxRestriction("s04", 400),
-    "cl": MaxRestriction("cl", 400),
-    "hc03": MaxRestriction("hc03", 20)
-}
+    max_restrictions = {
+        "ca": MaxRestriction("ca", 100),
+        "mg": MaxRestriction("mg", 50),
+        "na": MaxRestriction("na", 150),
+        "s04": MaxRestriction("s04", 400),
+        "cl": MaxRestriction("cl", 400),
+        "hc03": MaxRestriction("hc03", 20)
+    }
 
-min_restrictions = {
-    "ca": MinRestriction("ca", 60),
-    "mg": MinRestriction("mg", 10),
-    "na": MinRestriction("na", 10),
-    "s04": MinRestriction("s04", 10),
-    "cl": MinRestriction("cl", 10),
-    "hc03": MinRestriction("hc03", 0)
-}
+    min_restrictions = {
+        "ca": MinRestriction("ca", 60),
+        "mg": MinRestriction("mg", 10),
+        "na": MinRestriction("na", 10),
+        "s04": MinRestriction("s04", 10),
+        "cl": MinRestriction("cl", 10),
+        "hc03": MinRestriction("hc03", 0)
+    }
 
-#set one by one in reverse order
-desired_ppms = {
-    "cl": 225,
-    "s04": 150,
-    "ca": 70,
-    "mg": 40,
-    "na": 150,
-    "hc03": 0
-}
+    #set one by one in reverse order
+    desired_ppms = {
+        "cl": 225,
+        "s04": 150,
+        "ca": 70,
+        "mg": 40,
+        "na": 150,
+        "hc03": 0
+    }
 
-#not used yet
-ion_ranking = {
-    "cl": 1,
-    "s04": 0.8,
-    "ca": 0.6,
-    "mg": 0.4,
-    "na": 0.2,
-    "hc03": 0.1
-}
+    #not used yet
+    ion_ranking = {
+        "cl": 1,
+        "s04": 0.8,
+        "ca": 0.6,
+        "mg": 0.4,
+        "na": 0.2,
+        "hc03": 0.1
+    }
 
-print("--- Config ---")
-for ion, desired_ppm in desired_ppms.items():
-    print(ion, " min: ", min_restrictions.get(ion).min_ppm,
-          ", desired: ", desired_ppm,
-          ", max: ", max_restrictions.get(ion).max_ppm)
-
-
-optimiser = SolutionOptimiser(salt_defs, max_restrictions, min_restrictions, desired_ppms, ion_ranking)
-optimiser.set_ppms_for_desired()
-optimiser.optimise_for_all_salts()
-
-solution = optimiser.soln
+    print("--- Config ---")
+    for ion, desired_ppm in desired_ppms.items():
+        print(ion, " min: ", min_restrictions.get(ion).min_ppm,
+              ", desired: ", desired_ppm,
+              ", max: ", max_restrictions.get(ion).max_ppm)
 
 
-print("-- Final Result ----")
-final_ppms = solution.get_current_ppms()
-for ion, desired_ppm in desired_ppms.items():
-    # print(ion, " min ", min_restrictions[ion].min_ppm, " desired: ", desired_ppm,
-    #       ", actual: ", final_ppms.get(ion), " max ", max_restrictions[ion].max_ppm)
-    print(ion, " desired: ", desired_ppm, ", actual: ", final_ppms.get(ion))
+    optimiser = SolutionOptimiser(salt_defs, max_restrictions, min_restrictions, desired_ppms, ion_ranking)
+    optimiser.set_ppms_for_desired()
+    optimiser.optimise_for_all_salts()
 
-print(solution.get_current_salt_weights())
-print(solution.get_heuristic())
+    solution = optimiser.soln
 
-print(solution.get_litres_of_water())
+
+    print("-- Final Result ----")
+    final_ppms = solution.get_current_ppms()
+    for ion, desired_ppm in desired_ppms.items():
+        # print(ion, " min ", min_restrictions[ion].min_ppm, " desired: ", desired_ppm,
+        #       ", actual: ", final_ppms.get(ion), " max ", max_restrictions[ion].max_ppm)
+        print(ion, " desired: ", desired_ppm, ", actual: ", final_ppms.get(ion))
+
+    print(solution.get_current_salt_weights())
+    print(solution.get_heuristic())
+
+    print(solution.get_litres_of_water())
+
+
