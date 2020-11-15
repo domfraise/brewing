@@ -18,9 +18,9 @@ class SaltConcentration:
         return {ion.name: ion.get_ppm_for_weight(weight_in_g) for ion in self.salt_def.ions}
 
 class Ion:
-    def __init__(self, name, ppmPerGramme):
+    def __init__(self, name, ppmPerGrammePer10L):
         self.name = name
-        self.ppmPerGrammePer10L = ppmPerGramme
+        self.ppmPerGrammePer10L = ppmPerGrammePer10L
 
     def get_ppm_for_weight(self, weight):
         return self.ppmPerGrammePer10L * weight
@@ -286,9 +286,9 @@ class SolutionOptimiser:
 class IonConfig:
     def __init__(self, ion_name, min_ppm, desired_ppm, max_ppm, priority_multiplier):
         self.ion_name = ion_name
-        self.min_restriction = MinRestriction(ion_name, min_ppm)
+        self.min_ppm = min_ppm
         self.desired_ppm = desired_ppm
-        self.max_restriction = MaxRestriction(ion_name, max_ppm)
+        self.max_ppm = max_ppm
         self.priority_multiplier = priority_multiplier
 
 if __name__ == '__main__':
