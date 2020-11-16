@@ -75,15 +75,13 @@ class SaltSolution:
             score = -1000000
         current_ppms = self.get_current_ppms()
         for ion, current_ppm in current_ppms.items():
-            ppm_delta = (abs(desired_ppms.get(ion) - current_ppm))
+            ppm_delta = (abs(self.desired_ppms.get(ion) - current_ppm))
             # print("delta: ", ion, ppm_delta)
-            if ppm_delta == 0:
-                closeness_score = 1
-            else:
-                closeness_score = 1 / ppm_delta
+
+            closeness_score = -ppm_delta
 
             #higher is better
-            ion_score = closeness_score * ion_ranking.get(ion)
+            ion_score = closeness_score * self.ion_rankings.get(ion) #should this not be divide? a high multiplier should give a higher score
             score += ion_score
             # print("ion score", ion, ion_score)
 
@@ -100,10 +98,10 @@ class SaltSolution:
         self.min_restrictions_set = True
 
     def solution_is_valid(self):
-        for restriction in max_restrictions.values():
+        for restriction in self.max_restrictions.values():
             if restriction.violates_restriction(self):
                 return False
-        for restriction in min_restrictions.values():
+        for restriction in self.min_restrictions.values():
             if self.min_restrictions_set and restriction.violates_restriction(self):
                 return False
         return True
@@ -221,18 +219,28 @@ class SaltSolution:
 
 
 class SolutionOptimiser:
-    def __init__(self, salt_defs, max_restrictions, min_restrictions, desired_ppms, ion_rankings):
-        self.desired_ppms = desired_ppms
-        self.min_restrictions = min_restrictions
-        self.max_restrictions = max_restrictions
+    # def __init__(self, salt_defs, max_restrictions, min_restrictions, desired_ppms, ion_rankings):
+    #     self.desired_ppms = desired_ppms
+    #     self.min_restrictions = min_restrictions
+    #     self.max_restrictions = max_restrictions
+    #     self.salt_defs = salt_defs
+    #     self.ion_rankings = ion_rankings
+    #     self.soln = SaltSolution(salt_defs, max_restrictions, min_restrictions, desired_ppms, ion_ranking)
+    #     # self.best_concentrations = self.soln.get_current_salt_weights()
+    #     self.optimisation_delta = 0.1
+
+    def __init__(self, salt_defs, ion_configs):
+        self.desired_ppms = ion_configs.get_desired_ppms()
+        self.min_restrictions = ion_configs.get_min_restrictions()
+        self.max_restrictions = ion_configs.get_max_restrictions()
         self.salt_defs = salt_defs
-        self.ion_rankings = ion_rankings
-        self.soln = SaltSolution(salt_defs, max_restrictions, min_restrictions, desired_ppms, ion_ranking)
+        self.ion_rankings = ion_configs.get_ion_rankings()
+        self.soln = SaltSolution(salt_defs, self.max_restrictions, self.min_restrictions, self.desired_ppms, self.ion_rankings)
         # self.best_concentrations = self.soln.get_current_salt_weights()
         self.optimisation_delta = 0.1
 
     def set_ppms_for_desired(self):
-        for ion, ppm in reversed(desired_ppms.items()):
+        for ion, ppm in reversed(self.desired_ppms.items()):
             print("--- Setting ", ion, " to ", ppm, " ppm ---")
             success = self.soln.set_ppm_for_ion(ion, ppm)
             if not success:
@@ -278,7 +286,7 @@ class SolutionOptimiser:
             return
 
     def optimise_for_all_salts(self):
-        for salt, salt_def in salt_defs.items():
+        for salt, salt_def in self.salt_defs.items():
             # print("Optimising ", salt_def.name)
             self.optimise_for_salt(salt_def)
             # print(self.soln.get_heuristic())
@@ -291,18 +299,39 @@ class IonConfig:
         self.max_ppm = max_ppm
         self.priority_multiplier = priority_multiplier
 
+class IonConfigs:
+    def __init__(self, ion_configs):
+        self.ion_configs = ion_configs
+
+    def get_max_restrictions(self):
+        return {ion_config.ion_name: MaxRestriction(ion_config.ion_name, ion_config.max_ppm) for ion_config in self.ion_configs}
+
+    def get_min_restrictions(self):
+        return {ion_config.ion_name: MinRestriction(ion_config.ion_name, ion_config.min_ppm) for ion_config in self.ion_configs}
+
+    def get_desired_ppms(self):
+        return {ion_config.ion_name: ion_config.desired_ppm for ion_config in self.ion_configs}
+
+    def get_ion_rankings(self):
+        return {ion_config.ion_name: ion_config.priority_multiplier for ion_config in self.ion_configs}
+
+
+
 if __name__ == '__main__':
-    salt_defs = {"CaSO4": SaltDef("CaSO4", [Ion("ca", 23), Ion("s04", 56)]),
+
+    salt_defs = {
              "CaCl2": SaltDef("CaCl2", [Ion("ca", 36), Ion("cl", 64)]),
              "MgSO4": SaltDef("MgSO4", [Ion("mg", 20), Ion("s04", 80)]),
              "NaCl": SaltDef("NaCl", [Ion("na", 39), Ion("cl", 61)]),
-             "NaHCO3": SaltDef("NaHCO3", [Ion("na", 27), Ion("hc03", 73)])}
+             "NaHCO3": SaltDef("NaHCO3", [Ion("na", 27), Ion("hc03", 73)]),
+             "CaSO4": SaltDef("CaSO4", [Ion("ca", 23), Ion("s04", 56)]),
+    }
 
 
     max_restrictions = {
         "ca": MaxRestriction("ca", 100),
         "mg": MaxRestriction("mg", 50),
-        "na": MaxRestriction("na", 150),
+        "na": MaxRestriction("na", 100),
         "s04": MaxRestriction("s04", 400),
         "cl": MaxRestriction("cl", 400),
         "hc03": MaxRestriction("hc03", 20)
@@ -323,11 +352,10 @@ if __name__ == '__main__':
         "s04": 150,
         "ca": 70,
         "mg": 40,
-        "na": 150,
+        "na": 100,
         "hc03": 0
     }
 
-    #not used yet
     ion_ranking = {
         "cl": 1,
         "s04": 0.8,
@@ -363,4 +391,12 @@ if __name__ == '__main__':
 
     print(solution.get_litres_of_water())
 
-
+#
+# -- Final Result ----
+# cl  desired:  225 , actual:  234.6153846153846
+# s04  desired:  150 , actual:  360.86956521739125
+# ca  desired:  70 , actual:  74.10714285714285
+# mg  desired:  40 , actual:  45.10869565217391
+# na  desired:  150 , actual:  150.0
+# hc03  desired:  0 , actual:  None
+# {'NaCl': 3.8461538461538463, 'CaSO4': 3.2220496894409933, 'MgSO4': 2.2554347826086953}
