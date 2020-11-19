@@ -7,6 +7,7 @@ class GuiModel:
     def __init__(self, salt_defs, ion_configs):
         self.ion_configs = ion_configs
         self.salt_defs = salt_defs
+        self.salts_weights = {}
 
     def get_salts_view(self):
         salts_view = []
@@ -39,19 +40,32 @@ class GuiModel:
 
         return ion_config_rows
 
-    #     ["ion1", "Min", "__ion1min__", "Desired", "__ion1desired__", "Max", "__ion1max__", "Multiplier", "__ion1multiplier__"],
 
+    def set_salts_view(self, current_salt_weights):
+        for salt, weight in current_salt_weights.items():
+            gui.widgets['%sweight' % salt].setText(str(weight))
+
+    def get_salt_weights_view(self):
+        salt_rows = [['Salt'], ['Weight (g)']]
+        for salt in self.salt_defs.keys():
+            salt_rows[0].append(salt)
+            salt_rows[1].append(("0", '%sweight' % salt))
+            # row = [salt, ("0", '%sweight' % salt)]
+            # salt_rows.append(row)
+        return salt_rows
 
     def get_rows(self):
         all_rows = []
-        salts= self.get_salts_view()
-        configs= self.get_ion_config_view()
+        configs = self.get_ion_config_view()
 
-        all_rows.append(['<center>Salt Definitions</center>'],)
-        # all_rows.extend(salts)
-        all_rows.append([HSeparator],)
         all_rows.append(['<center>Configs</center>'],)
+        all_rows.append([HSeparator],)
         all_rows.extend(configs)
+
+        all_rows.append([['Calculate']])
+        all_rows.append([HSeparator])
+        all_rows.append(['<center>Salts in 10L</center>'],)
+        all_rows.extend(self.get_salt_weights_view())
 
         max_columns = 0
         for row in all_rows:
@@ -64,7 +78,6 @@ class GuiModel:
                 for i in range(0, columns_to_add):
                     row.append(___)
 
-        all_rows.append([['Calculate']])
 
         return all_rows
 
@@ -108,7 +121,6 @@ salt_gui_config = GuiModel(salt_defs, ion_configs)
 gui = Gui(*salt_gui_config.get_rows())
 salt_gui_config.populate_config_fields(gui)
 
-# soltion_optimiser = SolutionOptimiser(salt_defs, IonConfigs(salt_gui_config.ion_configs))
 
 with gui.Calculate:
     salt_gui_config.set_ion_configs(gui)
@@ -116,54 +128,6 @@ with gui.Calculate:
     soltion_optimiser.set_ppms_for_desired()
     soltion_optimiser.optimise_for_all_salts()
     salt_gui_config.set_actual_ppms(gui, soltion_optimiser.soln.get_current_ppms())
+    salt_gui_config.set_salts_view(soltion_optimiser.soln.get_current_salt_weights())
+
 gui.run()
-
-# gui = Gui(
-#
-#     [  'Enter numbers:', '__a__'  , '+' , '__b__',  ['Calculate'] ],
-#     [  'Result:  -->'  , 'result' ,  _  ,    _   ,       _        ],
-#     [  _               ,    _     ,  _  ,    _   ,      Quit      ] )
-#
-# with gui.Calculate:
-#     gui.result = float(gui.a) + float(gui.b)
-#
-# gui.run()
-
-# salts = [
-#     ["salt name",_ ,_ , "ion 1", '23',_ , "ion 2", '32', _],
-#     ["salt name2",_ ,_ , "ion 3", '45',_ , "ion 4", '54', _]
-# ]
-#
-# ion1min = 4
-#
-# config = [
-#     ["ion1", "Min", "__ion1min__", "Desired", "__ion1desired__", "Max", "__ion1max__", "Multiplier", "__ion1multiplier__"],
-#     ["ion2", "Min", "__ion2min__", "Desired", "__ion2desired__", "Max", "__ion2max__", "Multiplier", "__ion2multiplier__"],
-# ]
-#
-# rows = [
-#     ['<center>Calculate Salts</center>'],
-#     [HSeparator],
-#     ['Salt Definitions'],
-#     [HSeparator]
-# ]
-#
-# rows[3:3] = salts
-# rows[6:6] = config
-#
-# gui = Gui(*rows)
-#
-# gui.widgets['ion1min'].setText('4')
-
-    # [ 'Label'    , 'imagelabel.jpeg' , L('another label')  , VS('slider1')],
-    # [  _         ,     ['button']    , B('another button') ,     III      ],
-    # [ '__edit__' ,  E('an edit box') , _                   ,   VSeparator ],
-    # [   Quit     ,        Ok         , Cancel              ,     III      ],
-    # [    Yes     ,        No         , _                   ,     III      ],
-    # [  HS('slider2'),    ___         , ___                 ,      _       ]
-
-
-
-
-
-# gui.run()
