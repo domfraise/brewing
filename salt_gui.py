@@ -108,12 +108,12 @@ salt_defs = {
 }
 
 ion_configs = [
-    IonConfig('cl', 0, 225, 400, 1),
-    IonConfig('s04', 0, 150, 400, 1),
-    IonConfig('ca', 60, 70, 100, 1),
-    IonConfig('mg', 0, 40, 50, 1),
-    IonConfig('na', 0, 100, 100, 1),
-    IonConfig('hc03', 0, 0, 20, 1),
+    IonConfig('cl', 202, 212, 222, 1),
+    IonConfig('s04', 145, 155, 165, 1),
+    IonConfig('ca', 58, 68, 78, 1),
+    IonConfig('mg', 20, 30, 40, 1),
+    IonConfig('na', 50, 60, 70, 1),
+    IonConfig('hc03', 0, 5, 35, 1),
 ]
 salt_gui_config = GuiModel(salt_defs, ion_configs)
 
