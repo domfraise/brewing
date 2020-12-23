@@ -61,7 +61,7 @@ class SaltSolution:
         self.desired_ppms = desired_ppms
         self.ion_rankings = ion_rankings
         self.ion_sources = self.calculateIonSources()
-        self.min_restrictions_set = False
+        self.min_restrictions_set = True
         # self.set_min_restrictions()
 
     def get_litres_of_water(self):
