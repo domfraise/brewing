@@ -287,23 +287,29 @@ class SolutionOptimiser:
             return
 
     def optimise_for_all_salts(self):
+        print("---optimising for salts---")
         for salt, salt_def in self.salt_defs.items():
             # print("Optimising ", salt_def.name)
             self.optimise_for_salt(salt_def)
             # print(self.soln.get_heuristic())
 
 class IonConfig:
-    def __init__(self, ion_name, desired_ppm, priority_multiplier):
+    def __init__(self, ion_name, desired_ppm, priority_multiplier, threshold):
         self.ion_name = ion_name
-        self.min_ppm = desired_ppm - 5
+        self.min_ppm = desired_ppm - threshold
         self.desired_ppm = desired_ppm
-        self.max_ppm = desired_ppm + 5
+        self.max_ppm = desired_ppm + threshold
         self.priority_multiplier = priority_multiplier
+        self.threshold = threshold
 
     def set_desired(self, desired):
         self.desired_ppm = desired
-        self.min_ppm = desired - 5
-        self.max_ppm = desired + 5
+        self.min_ppm = desired - self.threshold
+        self.max_ppm = desired + self.threshold
+
+    def set_threshold(self, threshold):
+        self.threshold = threshold
+        self.set_desired(self.desired_ppm)
         
 
 class IonConfigs:
@@ -346,14 +352,15 @@ class GuiModel:
         return salts_view
 
     def get_ion_config_view(self):
-        ion_config_rows = [["Ion",  _ , "Desired", _ , "Multiplier", "Actual"]]
+        ion_config_rows = [["Ion",  "Desired", "+/-", "Multiplier", "Actual", _]]
         for ion_config in self.ion_configs:
             row = [ion_config.ion_name,
-                   _,
                    "__%sdesired__" % ion_config.ion_name,
-                   _,
+                   "__%sthreshold__" % ion_config.ion_name,
+
                    "__%smul__" % ion_config.ion_name,
                    ("", '%sactual' % ion_config.ion_name),
+                   _,
                    ]
             ion_config_rows.append(row)
 
@@ -402,14 +409,14 @@ class GuiModel:
 
     def populate_config_fields(self, gui):
         for ion_config in self.ion_configs:
-            # gui.widgets['%smin' % ion_config.ion_name].setText(str(ion_config.min_ppm))
             gui.widgets['%sdesired' % ion_config.ion_name].setText(str(ion_config.desired_ppm))
+            gui.widgets['%sthreshold' % ion_config.ion_name].setText(str(ion_config.threshold))
             # gui.widgets['%smax' % ion_config.ion_name].setText(str(ion_config.max_ppm))
             gui.widgets['%smul' % ion_config.ion_name].setText(str(ion_config.priority_multiplier))
 
     def set_ion_configs(self, gui):
         for ion_config in self.ion_configs:
-            # ion_config.min_ppm = float(gui.widgets['%smin' % ion_config.ion_name].text())
+            ion_config.set_threshold(float(gui.widgets['%sthreshold' % ion_config.ion_name].text()))
             ion_config.set_desired(float(gui.widgets['%sdesired' % ion_config.ion_name].text()))
             # ion_config.max_ppm = float(gui.widgets['%smax' % ion_config.ion_name].text())
             ion_config.priority_multiplier = float(gui.widgets['%smul' % ion_config.ion_name].text())
@@ -437,12 +444,12 @@ salt_defs = {
 
 
 ion_configs = [
-    IonConfig('cl', 212, 1),
-    IonConfig('s04',  155, 1),
-    IonConfig('ca',  68, 1),
-    IonConfig('mg', 30, 1),
-    IonConfig('na', 60, 1),
-    IonConfig('hc03', 5, 1),
+    IonConfig('cl', 212, 1, 10),
+    IonConfig('s04',  155, 1, 10),
+    IonConfig('ca',  68, 1, 10),
+    IonConfig('mg', 30, 1, 10),
+    IonConfig('na', 60, 1, 10),
+    IonConfig('hc03', 5, 1, 10),
 ]
 salt_gui_config = GuiModel(salt_defs, ion_configs)
 
