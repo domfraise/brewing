@@ -61,8 +61,8 @@ class SaltSolution:
         self.desired_ppms = desired_ppms
         self.ion_rankings = ion_rankings
         self.ion_sources = self.calculateIonSources()
-        self.min_restrictions_set = True
-        # self.set_min_restrictions()
+        self.min_restrictions_set = False
+        self.set_min_restrictions()
 
     def get_litres_of_water(self):
         total = 0
@@ -94,7 +94,7 @@ class SaltSolution:
             if self.get_current_ppms_for_ion(restriction.ion_name) < restriction.min_ppm:
                 success = self.set_ppm_for_ion(restriction.ion_name, restriction.min_ppm)
                 if not success:
-                    raise Exception('Cannot set restriction ', restriction, " without violating other restrictions")
+                    print('Cannot set restriction ', restriction.ion_name, restriction.min_ppm, " without violating other restrictions")
         print("--- Min restrictions set up ---")
         self.min_restrictions_set = True
 
