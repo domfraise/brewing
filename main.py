@@ -1,4 +1,4 @@
-from guietta import Gui, HSeparator, ___
+from guietta import Gui, HSeparator, ___ , _
 
 class SaltDef:
     def __init__(self, name, ions):
@@ -293,12 +293,18 @@ class SolutionOptimiser:
             # print(self.soln.get_heuristic())
 
 class IonConfig:
-    def __init__(self, ion_name, min_ppm, desired_ppm, max_ppm, priority_multiplier):
+    def __init__(self, ion_name, desired_ppm, priority_multiplier):
         self.ion_name = ion_name
-        self.min_ppm = min_ppm
+        self.min_ppm = desired_ppm - 5
         self.desired_ppm = desired_ppm
-        self.max_ppm = max_ppm
+        self.max_ppm = desired_ppm + 5
         self.priority_multiplier = priority_multiplier
+
+    def set_desired(self, desired):
+        self.desired_ppm = desired
+        self.min_ppm = desired - 5
+        self.max_ppm = desired + 5
+        
 
 class IonConfigs:
     def __init__(self, ion_configs):
@@ -340,12 +346,12 @@ class GuiModel:
         return salts_view
 
     def get_ion_config_view(self):
-        ion_config_rows = [["Ion", "Min", "Desired", "Max", "Multiplier", "Actual"]]
+        ion_config_rows = [["Ion",  _ , "Desired", _ , "Multiplier", "Actual"]]
         for ion_config in self.ion_configs:
             row = [ion_config.ion_name,
-                   "__%smin__" % ion_config.ion_name,
+                   _,
                    "__%sdesired__" % ion_config.ion_name,
-                   "__%smax__" % ion_config.ion_name,
+                   _,
                    "__%smul__" % ion_config.ion_name,
                    ("", '%sactual' % ion_config.ion_name),
                    ]
@@ -396,16 +402,16 @@ class GuiModel:
 
     def populate_config_fields(self, gui):
         for ion_config in self.ion_configs:
-            gui.widgets['%smin' % ion_config.ion_name].setText(str(ion_config.min_ppm))
+            # gui.widgets['%smin' % ion_config.ion_name].setText(str(ion_config.min_ppm))
             gui.widgets['%sdesired' % ion_config.ion_name].setText(str(ion_config.desired_ppm))
-            gui.widgets['%smax' % ion_config.ion_name].setText(str(ion_config.max_ppm))
+            # gui.widgets['%smax' % ion_config.ion_name].setText(str(ion_config.max_ppm))
             gui.widgets['%smul' % ion_config.ion_name].setText(str(ion_config.priority_multiplier))
 
     def set_ion_configs(self, gui):
         for ion_config in self.ion_configs:
-            ion_config.min_ppm = float(gui.widgets['%smin' % ion_config.ion_name].text())
-            ion_config.desired_ppm = float(gui.widgets['%sdesired' % ion_config.ion_name].text())
-            ion_config.max_ppm = float(gui.widgets['%smax' % ion_config.ion_name].text())
+            # ion_config.min_ppm = float(gui.widgets['%smin' % ion_config.ion_name].text())
+            ion_config.set_desired(float(gui.widgets['%sdesired' % ion_config.ion_name].text()))
+            # ion_config.max_ppm = float(gui.widgets['%smax' % ion_config.ion_name].text())
             ion_config.priority_multiplier = float(gui.widgets['%smul' % ion_config.ion_name].text())
 
     def set_actual_ppms(self, gui, ppms):
@@ -431,12 +437,12 @@ salt_defs = {
 
 
 ion_configs = [
-    IonConfig('cl', 202, 212, 222, 1),
-    IonConfig('s04', 145, 155, 165, 1),
-    IonConfig('ca', 58, 68, 78, 1),
-    IonConfig('mg', 20, 30, 40, 1),
-    IonConfig('na', 50, 60, 70, 1),
-    IonConfig('hc03', 0, 5, 35, 1),
+    IonConfig('cl', 212, 1),
+    IonConfig('s04',  155, 1),
+    IonConfig('ca',  68, 1),
+    IonConfig('mg', 30, 1),
+    IonConfig('na', 60, 1),
+    IonConfig('hc03', 5, 1),
 ]
 salt_gui_config = GuiModel(salt_defs, ion_configs)
 
