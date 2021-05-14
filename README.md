@@ -7,4 +7,4 @@
 ##Build
 
 `pip install pyinstaller`
-`pyintsaller main.py --onefile --windowed`
+`sudo pyinstaller --onefile --windowed main.py `
